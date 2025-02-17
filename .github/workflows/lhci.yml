@@ -12,7 +12,7 @@ jobs:
       - name: Run Lighthouse against a static dist dir
         uses: treosh/lighthouse-ci-action@v12
         with:
-          runs: 2
+          runs: 1
           urls: |
             https://myfranchise.kr/
             https://myfranchise.kr/more/
