@@ -19,5 +19,5 @@ jobs:
           uploadArtifacts: true # GitHub Actions에 결과 저장
           temporaryPublicStorage: true # 공개적으로 공유 가능한 URL 제공
 
-- name: Print Lighthouse Results
-  run: cat ./lhci_reports/*/report.json
+      - name: Print Lighthouse Results
+        run: cat ./lhci_reports/*/report.json
