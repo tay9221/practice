@@ -1,5 +1,8 @@
 name: Lighthouse
 on:
+  push: # 푸시 이벤트 발생 시
+    branches:
+      - main
   schedule:
     - cron: "0,5,10,15,50,55 * * * *"
   workflow_dispatch:
