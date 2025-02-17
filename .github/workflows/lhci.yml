@@ -1,3 +1,4 @@
+name: Lighthouse
 on:
   schedule:
     - cron: "5 * * * *"
@@ -7,6 +8,16 @@ jobs:
   test-cron:
     runs-on: ubuntu-latest
     steps:
-      - name: Print current time
-        run: |
-          echo "Current Time: $(date)"
+      - uses: actions/checkout@v4
+      - name: Run Lighthouse against a static dist dir
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          runs: 2
+          urls: |
+            https://myfranchise.kr/
+            https://myfranchise.kr/more/
+          uploadArtifacts: true # GitHub Actions에 결과 저장
+          temporaryPublicStorage: true # 공개적으로 공유 가능한 URL 제공
+
+- name: Print Lighthouse Results
+  run: cat ./lhci_reports/*/report.json
