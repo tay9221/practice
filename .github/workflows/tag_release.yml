@@ -1,76 +1,72 @@
-name: Tag & Release
+name: Tag & Release on main
 
 on:
   push:
     branches:
       - main
-  workflow_call:
 
 jobs:
-  release:
+  tag-and-release:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      # package.json에서 버전 정보 추출
-      - name: Get Package.json Info
-        id: info
+      - name: Get package.json version
+        id: pkg
         uses: jaywcjlove/github-action-package@main
-      - run: echo "version - ${{ steps.info.outputs.version }}"
 
-      # 마지막 tag의 정보 가져오기
-      - name: Get Latest Release Tag
+      - name: Get latest tag
+        id: latest_tag
         uses: actions-ecosystem/action-get-latest-tag@v1
-        id: get-latest-tag
         with:
           semver_only: true
 
-      # semver 규칙에 따라 버전 비교
-      - name: Compare Versions with Semver
-        id: compare-versions
+      - name: Compare versions
+        id: compare
         uses: actions/github-script@v6
         with:
           script: |
-            const packageVersion = '${{ steps.info.outputs.version }}';
-            const latestTag = '${{ steps.get-latest-tag.outputs.tag }}';
+            const core = require('@actions/core');
+            const newVer = '${{ steps.pkg.outputs.version }}';
+            const oldVer = '${{ steps.latest_tag.outputs.tag || '0.0.0' }}';
 
-            const [major1, minor1, patch1] = packageVersion.split('.').map(Number);
-            const [major2, minor2, patch2] = latestTag.split('.').map(Number);
-            let isChanged = false
-
-            if (major1 > major2) isChanged = true;
-            else if (minor1 > minor2) isChanged = true;
-            else if (patch1 > patch2) isChanged = true;
-
-            if (isChanged) {
-              core.setOutput('new_version', packageVersion);
-            } else {
-              core.setOutput('new_version', '');
-              core.setFailed(`No new version. Latest tag (${latestTag}) is equal to or higher than package.json version (${packageVersion}).`);
+            function toNums(v) {
+              return v.replace(/^v/, '').split('.').map(Number);
             }
 
-      # 마지막 태그와 새 버전 사이의 변경 이력을 가져옴
-      - name: Get Changelog
-        id: changelog
-        if: steps.compare-versions.outputs.new_version != ''
-        run: |
-          git log --oneline ${{ steps.get-latest-tag.outputs.tag }}..HEAD > changelog.txt
-          echo "changelog=$(cat changelog.txt)" >> $GITHUB_OUTPUT
-          cat changelog.txt
-        continue-on-error: true
+            const [nMaj, nMin, nPatch] = toNums(newVer);
+            const [oMaj, oMin, oPatch] = toNums(oldVer);
 
-      # 새로운 태그가 있을 때만 태그를 생성하고 릴리스하기
-      - name: Create Tag and Release
-        if: steps.compare-versions.outputs.new_version != ''
+            const isNewer =
+              nMaj > oMaj ||
+              (nMaj === oMaj && nMin > oMin) ||
+              (nMaj === oMaj && nMin === oMin && nPatch > oPatch);
+
+            if (!isNewer) {
+              core.setFailed(`Version ${newVer} is not newer than ${oldVer}`);
+            } else {
+              core.setOutput('new_version', newVer);
+            }
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          git fetch --tags
+          git log --pretty=format:"- %s (%h)" ${{ steps.latest_tag.outputs.tag }}..HEAD > changes.txt
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          cat changes.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create release
         uses: actions/create-release@v1
+        if: success()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.compare-versions.outputs.new_version }}
-          release_name: "Release ${{ steps.compare-versions.outputs.new_version }}"
-          body: |
-            # Changes
-            ${{ steps.changelog.outputs.changelog }}
+          tag_name: ${{ steps.compare.outputs.new_version }}
+          release_name: "Changes"
+          body: ${{ steps.changelog.outputs.changelog }}
           draft: false
           prerelease: false
