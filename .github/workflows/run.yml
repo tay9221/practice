@@ -1,0 +1,9 @@
+name: Tag & Release on main
+
+on:
+  push:
+    branches:
+      - main
+
+  tag-release:
+    uses: ./.github/workflows/tag_release.yml
