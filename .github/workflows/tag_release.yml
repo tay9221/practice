@@ -28,7 +28,6 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const core = require('@actions/core');
             const newVer = '${{ steps.pkg.outputs.version }}';
             const oldVer = '${{ steps.latest_tag.outputs.tag || '0.0.0' }}';
 
