@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write # ← 이거 추가
+
 jobs:
   tag-and-release:
     runs-on: ubuntu-latest
