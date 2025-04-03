@@ -1,6 +1,9 @@
 name: Tag & Release on main
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch: # 수동 실행
 
 permissions:
