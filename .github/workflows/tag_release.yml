@@ -1,0 +1,73 @@
+name: Tag & Release
+
+on:
+  workflow_call:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # package.json에서 버전 정보 추출
+      - name: Get Package.json Info
+        id: info
+        uses: jaywcjlove/github-action-package@main
+      - run: echo "version - ${{ steps.info.outputs.version }}"
+
+      # 마지막 tag의 정보 가져오기
+      - name: Get Latest Release Tag
+        uses: actions-ecosystem/action-get-latest-tag@v1
+        id: get-latest-tag
+        with:
+          semver_only: true
+
+      # semver 규칙에 따라 버전 비교
+      - name: Compare Versions with Semver
+        id: compare-versions
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const packageVersion = '${{ steps.info.outputs.version }}';
+            const latestTag = '${{ steps.get-latest-tag.outputs.tag }}';
+
+            const [major1, minor1, patch1] = packageVersion.split('.').map(Number);
+            const [major2, minor2, patch2] = latestTag.split('.').map(Number);
+            let isChanged = false
+
+            if (major1 > major2) isChanged = true;
+            else if (minor1 > minor2) isChanged = true;
+            else if (patch1 > patch2) isChanged = true;
+
+            if (isChanged) {
+              core.setOutput('new_version', packageVersion);
+            } else {
+              core.setOutput('new_version', '');
+              core.setFailed(`No new version. Latest tag (${latestTag}) is equal to or higher than package.json version (${packageVersion}).`);
+            }
+
+      # 마지막 태그와 새 버전 사이의 변경 이력을 가져옴
+      - name: Get Changelog
+        id: changelog
+        if: steps.compare-versions.outputs.new_version != ''
+        run: |
+          git log --oneline ${{ steps.get-latest-tag.outputs.tag }}..HEAD > changelog.txt
+          echo "changelog=$(cat changelog.txt)" >> $GITHUB_OUTPUT
+          cat changelog.txt
+        continue-on-error: true
+
+      # 새로운 태그가 있을 때만 태그를 생성하고 릴리스하기
+      - name: Create Tag and Release
+        if: steps.compare-versions.outputs.new_version != ''
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.compare-versions.outputs.new_version }}
+          release_name: "Release ${{ steps.compare-versions.outputs.new_version }}"
+          body: |
+            # Changes
+            ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false

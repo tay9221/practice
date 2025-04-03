@@ -17,8 +17,8 @@ jobs:
         with:
           runs: 1
           urls: |
-            https://myfranchise.kr/
-            https://myfranchise.kr/more/
+            https://myfranchise.kr
+            https://myfranchise.kr/more
           uploadArtifacts: true # GitHub Actions에 결과 저장
           temporaryPublicStorage: true # 공개적으로 공유 가능한 URL 제공
 
