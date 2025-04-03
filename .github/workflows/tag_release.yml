@@ -53,10 +53,17 @@ jobs:
         id: changelog
         run: |
           git fetch --tags
-          git log --pretty=format:"- %s (%h)" ${{ steps.latest_tag.outputs.tag }}..HEAD > changes.txt
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          cat changes.txt >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+
+          if [ -z "${{ steps.latest_tag.outputs.tag }}" ]; then
+            echo "No previous tag found. Getting all commits."
+            git log --pretty=format:"- %s (%h)" > changes.txt
+          else
+            echo "Previous tag found: ${{ steps.latest_tag.outputs.tag }}"
+            git log --pretty=format:"- %s (%h)" ${{ steps.latest_tag.outputs.tag }}..HEAD > changes.txt
+          fi
+
+          changelog=$(cat changes.txt | sed ':a;N;$!ba;s/\n/%0A/g')
+          echo "changelog=$changelog" >> $GITHUB_OUTPUT
 
       - name: Create release
         uses: actions/create-release@v1
