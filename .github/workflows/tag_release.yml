@@ -1,13 +1,13 @@
-name: Manual Tag & Release with PR Grouped Changelog
+name: Tag & Release on main
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
+  workflow_dispatch: # 수동 실행
 
 permissions:
-  contents: write # release 생성에 필요
+  contents: write # ← 이거 추가
 
 jobs:
   tag-and-release:
@@ -53,14 +53,12 @@ jobs:
               core.setOutput('new_version', newVer);
             }
 
-      - name: Build changelog from PRs
-        id: changelog
-        uses: mikepenz/release-changelog-builder-action@v4
+      - name: Extract GitHub release notes
+        id: notes
+        uses: ffurrer2/extract-release-notes@v2
         with:
           fromTag: ${{ steps.latest_tag.outputs.tag }}
           toTag: ${{ steps.compare.outputs.new_version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create release
         uses: actions/create-release@v1
@@ -70,6 +68,6 @@ jobs:
         with:
           tag_name: ${{ steps.compare.outputs.new_version }}
           release_name: "Release ${{ steps.compare.outputs.new_version }}"
-          body: ${{ steps.changelog.outputs.changelog }}
+          body: ${{ steps.notes.outputs.release_notes }}
           draft: false
           prerelease: false
