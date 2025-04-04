@@ -53,12 +53,18 @@ jobs:
               core.setOutput('new_version', newVer);
             }
 
-      - name: Extract GitHub release notes
-        id: notes
-        uses: ffurrer2/extract-release-notes@v2
-        with:
-          fromTag: ${{ steps.latest_tag.outputs.tag }}
-          toTag: ${{ steps.compare.outputs.new_version }}
+      - name: Generate changelog
+        id: changelog
+        run: |
+          git fetch --tags
+
+          if [ -z "${{ steps.latest_tag.outputs.tag }}" ]; then
+            echo "No previous tag found. Getting all commits."
+            git log --pretty=format:"- %s (%h)" > changes.txt
+          else
+            echo "Previous tag found: ${{ steps.latest_tag.outputs.tag }}"
+            git log --pretty=format:"- %s (%h)" ${{ steps.latest_tag.outputs.tag }}..HEAD > changes.txt
+          fi
 
       - name: Create release
         uses: actions/create-release@v1
@@ -68,6 +74,6 @@ jobs:
         with:
           tag_name: ${{ steps.compare.outputs.new_version }}
           release_name: "Release ${{ steps.compare.outputs.new_version }}"
-          body: ${{ steps.notes.outputs.release_notes }}
+          body_path: changes.txt # ← 이거!
           draft: false
           prerelease: false
