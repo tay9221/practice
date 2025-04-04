@@ -16,7 +16,7 @@ export default function Home() {
           <li className="mb-2">
             Get started by editing{" "}
             <code className="bg-red/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
+              src/app/page.tsxx
             </code>
             .
           </li>
@@ -34,8 +34,8 @@ export default function Home() {
               className="dark:invert"
               src="/vercel.svg"
               alt="Vercel logomark"
-              width={30}
-              height={30}
+              width={40}
+              height={40}
             />
             Deploy now
           </a>
@@ -45,7 +45,7 @@ export default function Home() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Read our docs
+            Read our docss
           </a>
         </div>
       </main>
