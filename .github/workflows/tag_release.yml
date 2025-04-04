@@ -68,12 +68,10 @@ jobs:
 
           if [ -z "${{ steps.latest_tag.outputs.tag }}" ]; then
             echo "No previous tag found. Getting all commits."
-            git log --pretty=format:"- %s (%h)" > changes.txt
-            git log --merges --pretty=format:"- %s %h" >> changes.txt
+            git log --merges --pretty="- %b by %an in %h" > changes.txt
           else
             echo "Previous tag found: ${{ steps.latest_tag.outputs.tag }}"
-            git log --pretty=format:"- %s (%h)" ${{ steps.latest_tag.outputs.tag }}..HEAD > changes.txt
-            git log --merges --pretty=format:"- %s %h" ${{ steps.latest_tag.outputs.tag }}..HEAD >> changes.txt
+            git log --merges --pretty="- %b by %an in %h" ${{ steps.latest_tag.outputs.tag }}..HEAD > changes.txt
           fi
 
       - name: Create release
