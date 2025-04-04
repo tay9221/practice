@@ -10,28 +10,78 @@ permissions:
   contents: write # ← 이거 추가
 
 jobs:
-  release:
-    name: Create release
+  tag-and-release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: get-npm-version
-        id: package-version
-        uses: martinbeentjes/npm-get-version-action@main
+      - name: Get package.json version
+        id: pkg
+        uses: jaywcjlove/github-action-package@main
 
-      - name: Extract release notes
-        id: extract-release-notes
-        uses: ffurrer2/extract-release-notes@v2
-
-      - name: "Create a GitHub release v${{ steps.package-version.outputs.current-version }}"
-        uses: ncipollo/release-action@v1
+      - name: Get latest tag
+        id: latest_tag
+        uses: actions-ecosystem/action-get-latest-tag@v1
         with:
-          tag: "${{ steps.package-version.outputs.current-version }}"
-          name: "Release ${{ steps.package-version.outputs.current-version }}"
-          body: |
-            ## Release notes:
-            ${{ steps.extract-release-notes.outputs.release_notes }}
+          semver_only: true
+
+      - name: Compare versions
+        id: compare
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const newVer = '${{ steps.pkg.outputs.version }}';
+            const oldVer = '${{ steps.latest_tag.outputs.tag || '0.0.0' }}';
+
+            function toNums(v) {
+              return v.replace(/^v/, '').split('.').map(Number);
+            }
+
+            const [nMaj, nMin, nPatch] = toNums(newVer);
+            const [oMaj, oMin, oPatch] = toNums(oldVer);
+
+            const isNewer =
+              nMaj > oMaj ||
+              (nMaj === oMaj && nMin > oMin) ||
+              (nMaj === oMaj && nMin === oMin && nPatch > oPatch);
+
+            if (!isNewer) {
+              core.setFailed(`Version ${newVer} is not newer than ${oldVer}`);
+            } else {
+              core.setOutput('new_version', newVer);
+            }
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          git fetch --tags
+
+          if [ -z "${{ steps.latest_tag.outputs.tag }}" ]; then
+            echo "No previous tag found. Getting all merged PRs."
+            git log --merges --pretty=format:"- %s (%h)" > changes.txt
+          else
+            echo "Previous tag found: ${{ steps.latest_tag.outputs.tag }}"
+            git log --merges --pretty=format:"- %s (%h)" ${{ steps.latest_tag.outputs.tag }}..HEAD > changes.txt
+          fi
+
+          if [ -z "${{ steps.latest_tag.outputs.tag }}" ]; then
+            echo "No previous tag found. Getting all commits."
+            git log --pretty=format:"- %s (%h)" > changes.txt
+          else
+            echo "Previous tag found: ${{ steps.latest_tag.outputs.tag }}"
+            git log --pretty=format:"- %s (%h)" ${{ steps.latest_tag.outputs.tag }}..HEAD > changes.txt
+          fi
+
+      - name: Create release
+        uses: actions/create-release@v1
+        if: success()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.compare.outputs.new_version }}
+          release_name: "Release ${{ steps.compare.outputs.new_version }}"
+          body_path: changes.txt # ← 이거!
+          draft: false
+          prerelease: false
