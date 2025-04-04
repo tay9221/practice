@@ -1,6 +1,9 @@
 name: Manual Tag & Release with PR Grouped Changelog
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
