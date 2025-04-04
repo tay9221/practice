@@ -1,13 +1,10 @@
-name: Tag & Release on main
+name: Manual Tag & Release with PR Grouped Changelog
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch: # 수동 실행
+  workflow_dispatch:
 
 permissions:
-  contents: write # ← 이거 추가
+  contents: write # release 생성에 필요
 
 jobs:
   tag-and-release:
@@ -53,18 +50,14 @@ jobs:
               core.setOutput('new_version', newVer);
             }
 
-      - name: Generate changelog
+      - name: Build changelog from PRs
         id: changelog
-        run: |
-          git fetch --tags
-
-          if [ -z "${{ steps.latest_tag.outputs.tag }}" ]; then
-            echo "No previous tag found. Getting all commits."
-            git log --pretty=format:"- %s (%h)" > changes.txt
-          else
-            echo "Previous tag found: ${{ steps.latest_tag.outputs.tag }}"
-            git log --pretty=format:"- %s (%h)" ${{ steps.latest_tag.outputs.tag }}..HEAD > changes.txt
-          fi
+        uses: mikepenz/release-changelog-builder-action@v4
+        with:
+          fromTag: ${{ steps.latest_tag.outputs.tag }}
+          toTag: ${{ steps.compare.outputs.new_version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create release
         uses: actions/create-release@v1
@@ -74,6 +67,6 @@ jobs:
         with:
           tag_name: ${{ steps.compare.outputs.new_version }}
           release_name: "Release ${{ steps.compare.outputs.new_version }}"
-          body_path: changes.txt # ← 이거!
+          body: ${{ steps.changelog.outputs.changelog }}
           draft: false
           prerelease: false
