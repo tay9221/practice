@@ -61,11 +61,11 @@ jobs:
           if [ -z "${{ steps.latest_tag.outputs.tag }}" ]; then
             echo "No previous tag found. Getting all merge commits."
             git log --merges --pretty="- %b%s" |
-              sed -E 's/Merge pull request #([0-9]+) from [^/]+\/(.+)/- \2 (#\1)/' > changes.txt
+              sed -E 's/Merge pull request #([0-9]+) from [^/]+\/(.+)/ #\1 /' > changes.txt
           else
             echo "Previous tag found: ${{ steps.latest_tag.outputs.tag }}"
             git log --merges --pretty="- %b%s" ${{ steps.latest_tag.outputs.tag }}..HEAD |
-              sed -E 's/Merge pull request #([0-9]+) from [^/]+\/(.+)/- \2 (#\1)/' > changes.txt
+              sed -E 's/Merge pull request #([0-9]+) from [^/]+\/(.+)/ #\1 /' > changes.txt
           fi
 
       - name: Create release
