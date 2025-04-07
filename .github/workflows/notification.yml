@@ -16,5 +16,4 @@ jobs:
               "text": ":tada: 새로운 릴리스가 배포되었습니다!\n*${{ github.event.release.name }}*\n<${{ github.event.release.html_url }}|릴리스 보러가기>\n\n```"${{ github.event.release.body }}"```"
             }
         env:
-          # SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_URL: https://hooks.slack.com/services/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
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
