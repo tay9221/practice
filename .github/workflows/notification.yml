@@ -20,80 +20,31 @@ jobs:
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
-            # {
-            #   "text": ":tada: *${{ github.event.release.tag_name }}* 릴리스가 배포되었습니다!\n<${{ github.event.release.html_url }}|릴리스 보러가기>\n\n${{ steps.changelog.outputs.body }}"
-            # }
             {
-              "blocks": [
+              "channel": "#general",
+              "text": "New Release: ${{ github.event.release.tag_name }}",
+              "attachments": [
                 {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "<https://myfranchise.kr|myfranchise.kr> v6.9.5\n"
-                  }
-                },
-                {
-                  "type": "rich_text",
-                  "elements": [
+                  "color": "#36a64f",
+                  "blocks": [
                     {
-                      "type": "rich_text_list",
-                      "style": "bullet",
-                      "indent": 0,
-                      "elements": [
-                        {
-                          "type": "rich_text_section",
-                          "elements": [
-                            {
-                              "type": "emoji",
-                              "name": "${{ github.event.release.tag_name }}"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "rich_text_section",
-                          "elements": [
-                            {
-                              "type": "text",
-                              "text": "${{ github.event.release.html_url }}"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "rich_text_section",
-                          "elements": [
-                            {
-                              "type": "link",
-                              "url": "https://example.com/",
-                              "text": "with a link",
-                              "style": {
-                                "bold": true
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "type": "rich_text_section",
-                          "elements": [
-                            {
-                              "type": "text",
-                              "text": "${{ steps.changelog.outputs.body }}"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "rich_text_section",
-                          "elements": [
-                            {
-                              "type": "text",
-                              "text": "this is the end"
-                            }
-                          ]
-                        }
-                      ]
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "<https://myfranchise.kr|myfranchise.kr> v6.9.5\n"
+                      }
+                    },
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "${{ steps.changelog.outputs.body }}"
+                      }
                     }
                   ]
                 }
-              ]
+              ],
+              "icon_emoji": ":robot_face:"
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
