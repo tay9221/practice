@@ -21,30 +21,16 @@ jobs:
         with:
           payload: |
             {
-              "channel": "#general",
-              "text": "New Release: ${{ github.event.release.tag_name }}",
-              "attachments": [
+              "text": "pr review request" # 메시지의 본문을 설정합니다.
+              "blocks": [ # 메시지의 블록을 설정합니다.
                 {
-                  "color": "#36a64f",
-                  "blocks": [
-                    {
-                      "type": "section",
-                      "text": {
-                        "type": "mrkdwn",
-                        "text": "<https://myfranchise.kr|myfranchise.kr> v6.9.5\n"
-                      }
-                    },
-                    {
-                      "type": "section",
-                      "text": {
-                        "type": "mrkdwn",
-                        "text": "${{ steps.changelog.outputs.body }}"
-                      }
-                    }
-                  ]
+                  "type": "section", # 블록의 타입을 설정합니다.
+                  "text": { # 텍스트 타입의 블록을 설정합니다.
+                    "type": "mrkdwn", # 텍스트의 마크다운 타입을 설정합니다.
+                    "text": "리뷰어로 할당되었습니다.\\\\n • 제목: PR 제목\\n • 리뷰어: @리뷰어 \\n • 링크: 리뷰 링크" # 메시지의 내용을 설정합니다.
+                  }
                 }
-              ],
-              "icon_emoji": ":robot_face:"
+              ]
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
