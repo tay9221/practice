@@ -3,6 +3,7 @@ name: Notify Slack on Release
 on:
   release:
     types: [published] # 릴리스가 publish 되었을 때만 실행
+  workflow_dispatch:
 
 jobs:
   notify-slack:
