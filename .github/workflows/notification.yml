@@ -19,6 +19,7 @@ jobs:
       - name: Send Slack message
         uses: slackapi/slack-github-action@v1.24.0
         with:
+          channel-id: ${{ secrets.TAY_CHANNEL }} # 슬랙 채널 ID
           payload: |
             {
               "text": "pr review request" # 메시지의 본문을 설정합니다.
@@ -33,4 +34,4 @@ jobs:
               ]
             }
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_TAY_BOT_TOKEN }}
