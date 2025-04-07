@@ -9,12 +9,19 @@ jobs:
   notify-slack:
     runs-on: ubuntu-latest
     steps:
+      - name: Prepare changelog
+        id: changelog
+        run: |
+          body="${{ github.event.release.body }}"
+          safe_body=$(echo "${body:-No changelog provided.}" | jq -Rs .)
+          echo "body=${safe_body}" >> $GITHUB_OUTPUT
+
       - name: Send Slack message
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
             {
-              "text": ":tada: 새로운 릴리스가 배포되었습니다!\n*${{ github.event.release.name }}*\n<${{ github.event.release.html_url }}|릴리스 보러가기>\n\n```"${{ github.event.release.body }}"```"
+              "text": ":tada: *${{ github.event.release.tag_name }}* 릴리스가 배포되었습니다!\n<${{ github.event.release.html_url }}|릴리스 보러가기>\n\n${{ steps.changelog.outputs.body }}"
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
