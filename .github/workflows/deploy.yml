@@ -1,0 +1,62 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Cache node modules
+        id: cache-nodemodules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install dependencies
+        # node_modules 캐시가 없는 경우에만 실행
+        if: steps.cache-nodemodules.outputs.cache-hit != 'true'
+        run: yarn install --frozen-lockfile
+
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          # Next.js 빌드 캐시 경로
+          path: .next/cache
+          # 캐시 키는 OS, yarn.lock 파일 해시 기반으로 생성
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-
+
+      - name: Build application
+        run: yarn build
+
+      - name: Extract git information
+        id: git-info
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+
+          echo "PACKAGE_VERSION=${PACKAGE_VERSION}" >> $GITHUB_ENV
+          echo "${PACKAGE_VERSION}"
+
+    #   - name: Build and push image to Amazon ECR
+    #     id: build-image
+    #     run: |
+    #       docker build --platform=linux/amd64 \
+    #         -t ${PACKAGE_VERSION} \
+    #         -f Dockerfile .
